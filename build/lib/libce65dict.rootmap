@@ -1,0 +1,10 @@
+{ decls }
+namespace std {  }
+
+[ libce65dict.so ]
+# List of selected classes
+class ce65_event
+class ce65_frame
+class vector<ce65_event>
+class vector<ce65_frame>
+header CE65Event.h
