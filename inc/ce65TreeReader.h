@@ -15,6 +15,7 @@
 #include "../inc/CE65Event.h"
 #include "../inc/globals.h"
 #include "../inc/cout_msg.h"
+#include "../inc/pbar.hpp"
 #include "../inc/Cluster.h"
 #include "TBenchmark.h"
 
@@ -40,6 +41,8 @@
 #include <regex>
 #include <queue>
 #include <set>
+#include <vector>
+#include <numeric> 
 #include <cstdlib>	//atof
 #include <iostream> //cout, cin, endl
 #include <csignal>	//SIGINT
@@ -114,10 +117,10 @@ public:
 
 	void FillSinglePixelRawSpectra(int iFrame = 0);
 	void FillSinglePixelSignalSpectra();
-	void AnalyseOnePixel(TH1D *h, int xPix, int yPix);
 	void FillBaselineSpectra();
 	void FillSingleEvent();
 	void FillSignalMap();
+	void FillClusterMatrix();
 	void ReadCalibData(TString dc_calib_path, TString ac_calib_path);
 	void HistoInit();
 	void Process();
@@ -129,26 +132,21 @@ public:
 
 	TH1D *hPixRawSpectra[X_MX_SIZE][Y_MX_SIZE];
 	TH1D *hPixSignalSpectra[X_MX_SIZE][Y_MX_SIZE];
-	TH1D *h_mxAmpAC_baseline;
+	TH1D *h_baseline;
 
 	TH2D *h2_CE65_baseline;
 	TH2D *h2_CE65_noise;
 	TH2D *h2_calib_noise_map;
 
-	TH2D *h2_CE65_nb_of_hits;
 	TH2D *h2_CE65_signal_mean;
 	TH2D *h2_CE65_signal_width;
 
-	TH1D *h_mxAmpAC_noise;
-	TH1D *h_mxAmpAC_quick_spectra;
-	TH2D *h2_unity_map;
+	TH1D *h_noise;
 	TH2D *h2_noisy_pixels_map;
 	TH2D *h2_ac_gain_map;
 	TH2D *h_noisy_pix_map;
-	TH2D *h_hit_map;
-	TH1D *h_mxAmpAC_sig_in_time;
+	TH2D *h_cluster_hit_map;
 	TH1D *h_cluster_multiplicity;
-	TCanvas *c_mxAmpAC_sig_in_time;
 
 	TH2D *h2_1eve_clstr_hitmap[10];
 
@@ -163,9 +161,12 @@ public:
 	TH2D *h_seed_vs_neighbor;
 	TCanvas *c_single_ev_time_signal;
 
+	TH2D *h_cluster_mat_charge;
+	TH2D *h_cluster_mat_ratio;
+
 	// --- Clustering methods ---
-	const std::vector<Cluster>& getClusters() const { return _clusters; } 
-	void setCluster(Cluster&& cluster) { _clusters.push_back(std::move(cluster)); }
+	std::vector<std::unique_ptr<Cluster>>& getClusters() { return _clusters; } 
+	void setCluster(std::unique_ptr<Cluster> cluster) { _clusters.push_back(std::move(cluster)); }
 	void resetClusters() { _clusters.clear(); }
 	std::vector<std::unique_ptr<Pixel>> findSeedCandidates();
 	void Clustering();
@@ -182,13 +183,21 @@ private:
 	TString _input_tree_name{""};	/*!< \brief input tree name */
 	TFile *_out_data_file;
 	TTree *_out_tree;
-	uint _skipEvents = 0;
+	unsigned int _skipEvents = 0;
 	double _statisticFraction = 1;
 
 	int sample_cntr = 0;
-	uint _iEvent = 0;
-	uint _i_saved_to_1eveh2hitmap = 0;
-	std::vector<Cluster> _clusters;
+	unsigned int _iEvent = 0;
+	unsigned int _i_saved_to_1eveh2hitmap = 0;
+	std::vector<std::unique_ptr<Cluster>> _clusters;
+	std::vector<int> _neighbor_mat_charge = {0,0,0,0,0,0,0,0};
+	std::vector<int> _neighbor_mat_number = {0,0,0,0,0,0,0,0};
+	// neighbor matrix
+	// | 03 | 05 | 08 |
+	// -----------------
+	// | 02 |seed| 07 |	
+	// -----------------
+	// | 01 | 04 | 06 |
 };
 
 #endif

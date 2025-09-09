@@ -25,8 +25,8 @@ public:
 
 
 private:
-    double m_column;
-    double m_row;
+    double m_column = 0;
+    double m_row = 0;
     int m_charge = 0;
     int m_size = 0;
     std::vector<std::unique_ptr<Pixel>> m_pixels;

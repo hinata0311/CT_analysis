@@ -20,7 +20,7 @@
 
 int main(int argc, char **argv)
 {
-    MSG(INFO, "\n\n >>>>>>> Running data RunControl for FLAME analysis <<<<<<<< \n\n");
+    std::cout << "\033[32m" << "\n<<<<<< Running data RunControl for FLAME analysis >>>>>>" <<  "\033[0m" << std::endl;	
 
     //   TApplication theApp("App", &argc, argv);
     gSystem->AddIncludePath("-I./src");
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
         reader->fileName = "B4_PCB19_fe";
     }
     // PCB10_B4_10M_HV0_VBB1_fe
-    std::cout << "Running analysis for input file: " << reader->fileName << std::endl;
+     MSG(INFO,"Running analysis for input file: " << reader->fileName);
 
     // reader		-> ReadCalibData("./calib_data/B4_PCB24_DC_gain_T10.root", "./calib_data/B4_PCB24_DC_gain_T10_2.root");
     //  reader		-> ReadCalibData("", "/home/akumar/ce65v2_daq/analysis/macros/out_data/AC_gain_CE65V2_PCB08_Proxy5_10V_Fe55_20231016.root");
