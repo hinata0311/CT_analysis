@@ -16,7 +16,7 @@
 #include "../inc/globals.h"
 #include "../inc/cout_msg.h"
 
-#include "ce65TreeReader.h"
+#include "CE65TreeAnalyzer.h"
 
 int main(int argc, char **argv)
 {
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
     TString outfile_suffix = "_wave";
 
-    ce65TreeReader *reader = new ce65TreeReader();
+    CE65TreeAnalyzer *reader = new CE65TreeAnalyzer();
     if (argc == 2)
     {
         reader->fileName = argv[1];

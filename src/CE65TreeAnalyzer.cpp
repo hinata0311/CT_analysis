@@ -1,14 +1,14 @@
 // -----------------------------------------------------------------------
 // ------------------------- Compilation ---------------------------------
-// `root-config --cxx` `root-config --cflags`  -O2 -W ce65TreeReader.cpp -o offline_analysis `root-config --ldflags` `root-config --glibs`
+// `root-config --cxx` `root-config --cflags`  -O2 -W CE65TreeAnalyzer.cpp -o offline_analysis `root-config --ldflags` `root-config --glibs`
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
 
-#include "ce65TreeReader.h"
+#include "CE65TreeAnalyzer.h"
 
 bool terminate_process = false;
 
-void ce65TreeReader::OpenOutTree(TString sufix = "")
+void CE65TreeAnalyzer::OpenOutTree(TString sufix = "")
 {
   TString data_dir = DEFAULT_OUTPUT_DATA_PATH;
   _out_data_file = TFile::Open(data_dir + fileName + sufix + ".root", "recreate");
@@ -16,7 +16,7 @@ void ce65TreeReader::OpenOutTree(TString sufix = "")
   _out_data_file->cd();
 }
 
-void ce65TreeReader::ReadCalibData(TString dc_calib_path = "no_path", TString ac_calib_path = "no_path")
+void CE65TreeAnalyzer::ReadCalibData(TString dc_calib_path = "no_path", TString ac_calib_path = "no_path")
 {
   if (!(ac_calib_path == "no_path")){
     h2_ac_gain_map = new TH2D("h2_ac_gain_map", "h2_ac_gain_map;X;Y", X_MX_SIZE, 0, X_MX_SIZE, Y_MX_SIZE, 0, Y_MX_SIZE);
@@ -37,7 +37,7 @@ void ce65TreeReader::ReadCalibData(TString dc_calib_path = "no_path", TString ac
   }
 }
 
-void ce65TreeReader::CloseOutTree()
+void CE65TreeAnalyzer::CloseOutTree()
 {
   _out_data_file->cd();
   _out_data_file->Write();
@@ -46,7 +46,7 @@ void ce65TreeReader::CloseOutTree()
 
 // HistoInit ----------------------------------------------------------------------------------
 
-void ce65TreeReader::HistoInit()
+void CE65TreeAnalyzer::HistoInit()
 {
   MSG(CNTR, "[TREE] Control plots histograms initialization...");
   gStyle->SetPalette(kViridis);
@@ -115,13 +115,13 @@ void ce65TreeReader::HistoInit()
 
   h_seed_vs_neighbor = new TH2D("h_seed_vs_neighbor", "seed vs neighbor charge;seed charge [ADCu];neighbor charge [ADCu]", 100, -1000, 10000, 100, -1000, 10000);
 
-  h_cluster_mat_charge = new TH2D("h_cluster_mat_charge", "mean charge in cluster matrix", 3, 0, 3, 3, 0, 3);
-  h_cluster_mat_ratio = new TH2D("h_cluster_mat_ratio", "ratio in cluster matrix", 3, 0, 3, 3, 0, 3);
+  h_cluster_mat_charge = new TH2D("h_cluster_mat_charge", "mean charge in cluster matrix", 3, -1.5, 1.5, 3, -1.5, 1.5);
+  h_cluster_mat_ratio = new TH2D("h_cluster_mat_ratio", "ratio in cluster matrix", 3, -1.5, 1.5, 3, -1.5, 1.5);
 }
 
 // LoadTree --------------------------------------------------------------------------------
 
-int ce65TreeReader::LoadTree()
+int CE65TreeAnalyzer::LoadTree()
 {
 
   MSG(CNTR, "[TREE] Loading input tree/trees...");
@@ -172,7 +172,7 @@ int ce65TreeReader::LoadTree()
 
 // TreeInfo ---------------------------------------------------------
 
-void ce65TreeReader::TreeInfo()
+void CE65TreeAnalyzer::TreeInfo()
 {
   MSG(INFO, "[TREE] Entires in tree: " << tree->GetEntries());
   MSG(INFO, "[TREE] Skipped events in the analysis: " << _skipEvents << ". " << _statisticFraction*100. << "% of the statistic will be analysed");
@@ -182,7 +182,7 @@ void ce65TreeReader::TreeInfo()
 
 // ------------------------------------------------------------------
 
-void ce65TreeReader::FillSinglePixelRawSpectra(int iFrame)
+void CE65TreeAnalyzer::FillSinglePixelRawSpectra(int iFrame)
 {
 
   int skip_boundary_pix = 0;
@@ -204,7 +204,7 @@ void ce65TreeReader::FillSinglePixelRawSpectra(int iFrame)
   }
 }
 
-void ce65TreeReader::FillSinglePixelSignalSpectra()
+void CE65TreeAnalyzer::FillSinglePixelSignalSpectra()
 {
   int skip_boundary_pix = 0;
   double signal = 0;
@@ -236,7 +236,7 @@ void ce65TreeReader::FillSinglePixelSignalSpectra()
 
 // ----- new Clustering method -----
 
-std::vector<std::unique_ptr<Pixel>> ce65TreeReader::findSeedCandidates()
+std::vector<std::unique_ptr<Pixel>> CE65TreeAnalyzer::findSeedCandidates()
 {
   std::vector<std::unique_ptr<Pixel>> seed_candidates;
   int signal;
@@ -261,7 +261,7 @@ bool isWithinBounds(int x, int y)
   return x >= 0 && x < X_MX_SIZE + skip_boundary_clustering && y >= 0 && y < Y_MX_SIZE - skip_boundary_clustering;
 }
 
-void ce65TreeReader::Clustering()
+void CE65TreeAnalyzer::Clustering()
 {
   std::vector<std::unique_ptr<Pixel>> seed_candidates = findSeedCandidates();
   std::set<std::pair<int, int>> used_pixels;
@@ -340,7 +340,7 @@ void ce65TreeReader::Clustering()
   }
 }
 
-void ce65TreeReader::CalClusterPos() {
+void CE65TreeAnalyzer::CalClusterPos() {
   double sum_charge_cross_x ;
   double sum_charge_cross_y ;
   for (auto &cluster : getClusters()) {
@@ -358,7 +358,7 @@ void ce65TreeReader::CalClusterPos() {
 
 }
 
-void ce65TreeReader::FillClusterHist()
+void CE65TreeAnalyzer::FillClusterHist()
 {
   for (const auto &cluster : getClusters())
   {
@@ -389,7 +389,7 @@ void ce65TreeReader::FillClusterHist()
   }
 }
 
-void ce65TreeReader::FillClusterMatrix() {
+void CE65TreeAnalyzer::FillClusterMatrix() {
   int mat = 0;
   double total_neighbors = std::accumulate(_neighbor_mat_number.begin(), _neighbor_mat_number.end(), 0.0);
 
@@ -401,11 +401,11 @@ void ce65TreeReader::FillClusterMatrix() {
         // h_cluster_mat_ratio->Fill(dx+1, dy+1, 1);
       } else {
         if(_neighbor_mat_number[mat] != 0) {
-          h_cluster_mat_charge->Fill(dx+1, dy+1, _neighbor_mat_charge[mat]/_neighbor_mat_number[mat]);
-          h_cluster_mat_ratio->Fill(dx+1, dy+1, neighbor_ratio);
+          h_cluster_mat_charge->Fill(dx, dy, _neighbor_mat_charge[mat]/_neighbor_mat_number[mat]);
+          h_cluster_mat_ratio->Fill(dx, dy, neighbor_ratio);
         } else {
-          h_cluster_mat_charge->Fill(dx+1, dy+1, _neighbor_mat_charge[mat]);
-          h_cluster_mat_ratio->Fill(dx+1, dy+1, neighbor_ratio);
+          h_cluster_mat_charge->Fill(dx, dy, _neighbor_mat_charge[mat]);
+          h_cluster_mat_ratio->Fill(dx, dy, neighbor_ratio);
         }
         mat++;
       }
@@ -413,7 +413,7 @@ void ce65TreeReader::FillClusterMatrix() {
   }
 }
 
-void ce65TreeReader::FillBaselineSpectra()
+void CE65TreeAnalyzer::FillBaselineSpectra()
 {
 
   for (int xPix = 0; xPix < X_MX_SIZE; xPix++)
@@ -428,7 +428,7 @@ void ce65TreeReader::FillBaselineSpectra()
   }
 }
 
-void ce65TreeReader::FillSignalMap()
+void CE65TreeAnalyzer::FillSignalMap()
 {
 
   for (int xPix = 0; xPix < X_MX_SIZE; xPix++)
@@ -441,14 +441,13 @@ void ce65TreeReader::FillSignalMap()
         continue;
       if (yPix == 0 || yPix == Y_MX_SIZE - 1)
         continue;
-
       h2_CE65_signal_mean->Fill(xPix, yPix, hPixSignalSpectra[xPix][yPix]->GetMean());
       h2_CE65_signal_width->Fill(xPix, yPix, hPixSignalSpectra[xPix][yPix]->GetRMS());
     }
   }
 }
 
-void ce65TreeReader::FillSingleEvent()
+void CE65TreeAnalyzer::FillSingleEvent()
 {
 
   h_single_ev_signal_map->SetTitle("Signal map for event " + TString::Itoa(_iEvent, 10));
@@ -467,7 +466,7 @@ void ce65TreeReader::FillSingleEvent()
   }
 }
 
-void ce65TreeReader::Process()
+void CE65TreeAnalyzer::Process()
 {
 
   TBenchmark *benchmark = new TBenchmark();
@@ -522,7 +521,7 @@ void ce65TreeReader::Process()
 }
 
 // This func just catches ctrl+c so that the .root file is actually written
-// void ce65TreeReader::SignalHandler(int signum){
+// void CE65TreeAnalyzer::SignalHandler(int signum){
 void SignalHandler(int signum)
 {
   if (signum == SIGINT)

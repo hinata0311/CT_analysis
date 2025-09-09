@@ -8,8 +8,8 @@
  *  \todo
  */
 
-#ifndef ce65TreeReaderL_h
-#define ce65TreeReaderL_h
+#ifndef CE65TreeAnalyzer_h
+#define CE65TreeAnalyzer_h
 
 #include <bitset>
 #include "../inc/CE65Event.h"
@@ -53,12 +53,12 @@ const int PLANES_NUMBER = 3;
 extern bool terminate_process;
 void SignalHandler(int signum);
 
-class ce65TreeReader
+class CE65TreeAnalyzer
 {
 
 public:
 	/*!  \brief Default contructor -- creates shared libraries */
-	ce65TreeReader()
+	CE65TreeAnalyzer()
 	{
 		// --- Create dictionary with the output file objects collection
 		#if !defined(__CINT__)
@@ -126,7 +126,7 @@ public:
 	void Process();
 
 	//! Default constructor
-	~ce65TreeReader() {};
+	~CE65TreeAnalyzer() {};
 
 	std::ofstream outfile;
 
