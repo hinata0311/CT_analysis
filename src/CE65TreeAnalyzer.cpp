@@ -10,9 +10,8 @@ bool terminate_process = false;
 
 void CE65TreeAnalyzer::OpenOutTree(TString sufix = "")
 {
-  TString data_dir = DEFAULT_OUTPUT_DATA_PATH;
-  _out_data_file = TFile::Open(data_dir + fileName + sufix + ".root", "recreate");
-  MSG(INFO, "[CONF] Output file created: " << "../data/" + fileName + sufix + ".root");
+  _out_data_file = TFile::Open(_input_data_dir + _input_data_name + sufix + ".root", "recreate");
+  MSG(INFO, "[CONF] Output file created: " << "../data/" + _input_data_name + sufix + ".root");
   _out_data_file->cd();
 }
 
@@ -126,18 +125,11 @@ int CE65TreeAnalyzer::LoadTree()
 
   MSG(CNTR, "[TREE] Loading input tree/trees...");
 
-  TString name;
+  std::string name;
   _input_tree_name = "CE65Data";
-  //_input_data_dir        = "/scratch/rbugiel/CE65_DATA/";
-  _input_data_dir = DEFAULT_INPUT_DATA_PATH;
-
-  _input_data_name = fileName;
-
-  // tree = new TChain(_input_tree_name);
 
   name = _input_data_dir + _input_data_name + ".root";
-  // name = "/home/alice/DATA/TB_run_485105326_211203_105339.root";
-  TFile *f = new TFile(name);
+  TFile *f = new TFile(static_cast<TString>(name));
 
   if (!f)
   {
@@ -157,7 +149,7 @@ int CE65TreeAnalyzer::LoadTree()
     MSG(CNTR, "[TREE]  Tree: " << name << " will be loaded.");
   }
 
-  tree = (TTree *)f->Get(_input_tree_name);
+  tree = (TTree *)f->Get(static_cast<TString>(_input_tree_name));
 
   tree->SetBranchAddress("ev_number", &ev_number);
   tree->SetBranchAddress("frames_per_event", &frames_per_event);
@@ -240,13 +232,13 @@ std::vector<std::unique_ptr<Pixel>> CE65TreeAnalyzer::findSeedCandidates()
 {
   std::vector<std::unique_ptr<Pixel>> seed_candidates;
   int signal;
-  // default skip_boundary_seed = 2;
-  for (int x = 0 + skip_boundary_seed; x < X_MX_SIZE - skip_boundary_seed; x++)
+  // default _skip_edge_seed = 2;
+  for (int x = 0 + _skip_edge_seed; x < X_MX_SIZE - _skip_edge_seed; x++)
   {
-    for (int y = 0 + skip_boundary_seed; y < Y_MX_SIZE - skip_boundary_seed; y++)
+    for (int y = 0 + _skip_edge_seed; y < Y_MX_SIZE - _skip_edge_seed; y++)
     {
       signal = frame->at(signalFrame).raw_amp[x][y] - frame->at(baselineFrame).raw_amp[x][y];
-      if (signal > thSeed)
+      if (signal > _threshold_seed)
       {
         seed_candidates.push_back(std::make_unique<Pixel>(x, y, signal));
       }
@@ -257,8 +249,10 @@ std::vector<std::unique_ptr<Pixel>> CE65TreeAnalyzer::findSeedCandidates()
 
 bool isWithinBounds(int x, int y)
 {
-  // default skip_boundary_clustering = 1;
-  return x >= 0 && x < X_MX_SIZE + skip_boundary_clustering && y >= 0 && y < Y_MX_SIZE - skip_boundary_clustering;
+  // default _skip_edge_clustering = 1;
+  const int _skip_edge_clustering = 1;
+  return x >= 0 + _skip_edge_clustering && x < X_MX_SIZE - _skip_edge_clustering &&
+         y >= 0 + _skip_edge_clustering && y < Y_MX_SIZE - _skip_edge_clustering;
 }
 
 void CE65TreeAnalyzer::Clustering()
@@ -319,7 +313,7 @@ void CE65TreeAnalyzer::Clustering()
             int neighbor_signal = frame->at(signalFrame).raw_amp[neighbor_x][neighbor_y] - frame->at(baselineFrame).raw_amp[neighbor_x][neighbor_y];
 
             // Check if the neighbor signal exceeds the adjacency threshold.
-            if (neighbor_signal > thNeighbor)
+            if (neighbor_signal > _threshold_neighbor)
             {
               // Add the neighbor to the queue and mark it as used.
               pixel_queue.push({neighbor_x, neighbor_y});
@@ -475,19 +469,19 @@ void CE65TreeAnalyzer::Process()
   // Loop over events
   MSG(CNTR, "[TREE] Offline monitor running... wait for control plots.");
 
-  if (!eveMax)
+  if (!_eve_max || _eve_max == -1)
   {
-    eveMax = _statisticFraction * tree->GetEntries();
+    _eve_max = _statisticFraction * tree->GetEntries();
   }
-  MSG(INFO, "[CONF] max_event: " << eveMax);
+  MSG(INFO, "[CONF] max_event: " << _eve_max);
 
   constexpr auto ncols = 40;
   constexpr auto description = "\033[32m[EVENT ROOP]\033[0m";
   // --- Start event roop ---
-  pbar::pbar bar(eveMax, ncols, description);
+  pbar::pbar bar(_eve_max, ncols, description);
   bar.enable_recalc_console_width(1);	
   bar.init();
-  for (signed int iEvent = _skipEvents; iEvent < eveMax; iEvent++, bar++)
+  for (signed int iEvent = _skipEvents; iEvent < _eve_max; iEvent++, bar++)
   {
     // --- Get Tree ---
     _iEvent = iEvent;

@@ -78,11 +78,21 @@ public:
 		#endif
 	}
 
-	void SetSeedTh(double seed_thr) { thSeed = seed_thr; }
-	void SetNbhrTh(double nbhr_thr) { thNeighbor = nbhr_thr; }
-	void SetEveMax(double eve_max) { eveMax = eve_max; }
+	// --- Setter ---
+	void setSeedTh(double seed_thr) { _threshold_seed = seed_thr; }
+	void setNbhrTh(double nbhr_thr) { _threshold_neighbor = nbhr_thr; }
+	void setEveMax(double eve_max) { _eve_max = eve_max; }
+	void setSkipEdgeSeed(int skip_edge_seed) { _skip_edge_seed = skip_edge_seed; }
+	void setSkipEdgeClustering(int skip_edge_clustering) { _skip_edge_clustering = skip_edge_clustering; }
+	void setClusteringMethod(std::string method) { _clustering_method = method; }
+	void setInputDir(std::string input_dir) { _input_data_dir = input_dir; }
+	void setOutputDir(std::string output_dir) { _output_data_dir = output_dir; }
+	void setDataName(std::string data_name) {_input_data_name = data_name; }
+
+	// --- Getter ---
+	std::string getDataName() const { return _input_data_name; }
+
 	/*! \brief Initializes the class memebers. */
-	void init(const char *config_file);
 
 	/*! \brief Finds out which runs has to be taken to analysis (TChain)
 	 * \details Creates a run list starting from #_run_start to #_run_end with the step of #_step. In addition, adds the runs from _incl list. In the end excludes the runs from #_excl list.*/
@@ -96,17 +106,12 @@ public:
 	int signalFrame = 5;
 	int baselineFrame = 4;
 
-	double thSeed = 1000;
-	double thNeighbor = 210;
-	double eveMax;
-
 	unsigned long T0 = 0;
 
 	// ----  Branches definition ----
 	Long64_t ev_number = -1;
 	int frames_per_event = -1;
 	std::vector<ce65_frame> *frame = 0;
-	TString fileName;
 	int chip_variant = 3;
 ;
 	// class functions
@@ -177,10 +182,21 @@ private:
 	TEnv config;
 	TTree *tree; /*!< \todo [HIGH PRIOR] Input data are read out as a TChain. Needs to add possibility to provide the range of runs in config. */
 
-	TString _output_image_path{""}; /*!< \brief path to output plots directory  */
-	TString _input_data_dir{""};	/*!< \brief path to input data directory */
-	TString _input_data_name{""};	/*!< \brief core of the input file name */
-	TString _input_tree_name{""};	/*!< \brief input tree name */
+	std::string _output_image_path{""}; /*!< \brief path to output plots directory  */
+	std::string _input_data_dir{""};	/*!< \brief path to input data directory */
+	std::string _output_data_dir{""};	/*!< \brief path to input data directory */
+	std::string _input_data_name{""};	/*!< \brief core of the input file name */
+	std::string _input_tree_name{""};	/*!< \brief input tree name */
+
+	int _skip_edge_seed = 2;
+	int _skip_edge_clustering = 1;
+
+	std::string _clustering_method = "CLUSTER";
+	int _threshold_seed = 1000;
+	int _threshold_neighbor = 500;
+
+	int _eve_max = -1;
+
 	TFile *_out_data_file;
 	TTree *_out_tree;
 	unsigned int _skipEvents = 0;

@@ -3,13 +3,6 @@
 
 //#define _INCLUDE_EUDAQ_CONTROL  // -- specifies the operation mode:  coment this line for standalone compilation (when eudaq framework is not needed)
 
-// User setting
-#define DEFAULT_OUTPUT_DATA_PATH  "/home/teramoto/maps/ce65/kyorin/2507/data/hist/"
-#define DEFAULT_INPUT_DATA_PATH "/home/teramoto/maps/ce65/kyorin/2507/data/tree/"
-const int skip_boundary_seed = 2;
-const int skip_boundary_clustering = 1;
-
-
 // DAQ setting
 #define DAC_BOARD_ADC_MAX_COUNTS  65536
 #define RAW_DATA_BUFFER_SIZE		 2304 	// chars
