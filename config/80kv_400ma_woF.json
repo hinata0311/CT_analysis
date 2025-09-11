@@ -1,11 +1,11 @@
 {
-    "input_dir": "test/",
-    "output_dir": "test/",
-    "input_data_name": "test_tree",
-    "eve_max": -1,
+    "input_dir": "/home/teramoto/maps/ce65/kyorin/2507/data/tree/",
+    "output_dir": "/home/teramoto/maps/ce65/kyorin/2507/data/hist/",
+    "input_data_name": "ce65_ct2507_80kv_400ma_woF",
+    "eve_max": 10000,
     "clustering_method": "CLUSTER",
     "skip_edge_seed": 2,
     "skip_edge_cluster": 1,
     "threshold_seed": 1000,
-    "threshold_neighbor": 500
+    "threshold_neighbor": 200
 }

@@ -1,0 +1,11 @@
+{
+    "input_dir": "/home/teramoto/maps/ce65/kyorin/2507/data/tree/",
+    "output_dir": "/home/teramoto/maps/ce65/kyorin/2507/data/hist/",
+    "input_data_name": "test_tree",
+    "eve_max": -1,
+    "clustering_method": "CLUSTER",
+    "skip_edge_seed": 2,
+    "skip_edge_cluster": 1,
+    "threshold_seed": 1000,
+    "threshold_neighbor": 500
+}

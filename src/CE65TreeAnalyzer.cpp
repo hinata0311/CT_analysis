@@ -10,7 +10,7 @@ bool terminate_process = false;
 
 void CE65TreeAnalyzer::OpenOutTree(TString sufix = "")
 {
-  _out_data_file = TFile::Open(_input_data_dir + _input_data_name + sufix + ".root", "recreate");
+  _out_data_file = TFile::Open(_output_data_dir + _input_data_name + sufix + ".root", "recreate");
   MSG(INFO, "[CONF] Output file created: " << "../data/" + _input_data_name + sufix + ".root");
   _out_data_file->cd();
 }
