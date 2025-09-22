@@ -12,7 +12,7 @@ public:
     double colmun() const { return m_column; }
     double row() const { return m_row; }
     int charge() const { return m_charge; }
-    int size() const { return m_size; }
+    int size() const;
 
     void setColumn(double col) { m_column = col; }
     void setRow(double row) { m_row = row; }

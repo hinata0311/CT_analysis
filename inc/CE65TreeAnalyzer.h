@@ -88,17 +88,10 @@ public:
 	void setInputDir(std::string input_dir) { _input_data_dir = input_dir; }
 	void setOutputDir(std::string output_dir) { _output_data_dir = output_dir; }
 	void setDataName(std::string data_name) {_input_data_name = data_name; }
+	void setCalibFactor(double calib_factor) { _calib_factor = calib_factor; }
 
 	// --- Getter ---
 	std::string getDataName() const { return _input_data_name; }
-
-	/*! \brief Initializes the class memebers. */
-
-	/*! \brief Finds out which runs has to be taken to analysis (TChain)
-	 * \details Creates a run list starting from #_run_start to #_run_end with the step of #_step. In addition, adds the runs from _incl list. In the end excludes the runs from #_excl list.*/
-
-	TH1D *histo_test;
-	TH1D *get_histo_test();
 
 	const int width = 1600;
 	const int height = 600;
@@ -157,19 +150,26 @@ public:
 
 	TH1D *h_cluster_size;
 	TH1D *h_cluster_charge;
+	TH1D *h_cluster_charge_calibrated;
 	TH1D *h_seed_charge;
+	TH1D *h_seed_charge_calibrated;
 	TH1D *h_neighbor_charge;
+	TH1D *h_neighbor_charge_calibrated;
 
 	TH1D *h_bl_in_time[X_MX_SIZE][Y_MX_SIZE];
 	TH2D *h_single_ev_signal_map;
 	TH1D *h_single_ev_time_signal;
 	TH2D *h_seed_vs_neighbor;
+	TH2D *h_seed_vs_neighbors;
+	TH2D *h_charge_vs_size;
+	TH2D *h_seedcharge_vs_size;
 	TCanvas *c_single_ev_time_signal;
 
 	TH2D *h_cluster_mat_charge;
 	TH2D *h_cluster_mat_ratio;
 
 	// --- Clustering methods ---
+	bool isWithinBounds(int x, int y);
 	std::vector<std::unique_ptr<Cluster>>& getClusters() { return _clusters; } 
 	void setCluster(std::unique_ptr<Cluster> cluster) { _clusters.push_back(std::move(cluster)); }
 	void resetClusters() { _clusters.clear(); }
@@ -196,6 +196,8 @@ private:
 	int _threshold_neighbor = 500;
 
 	int _eve_max = -1;
+
+	double _calib_factor = 1;
 
 	TFile *_out_data_file;
 	TTree *_out_tree;

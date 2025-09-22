@@ -107,12 +107,18 @@ void CE65TreeAnalyzer::HistoInit()
   h_cluster_multiplicity = new TH1D("h_cluster_multiplicity", "h_cluster_multiplicity; event frame ; cluster multiplicity", 10000, 0, 100000);
 
   h_cluster_charge = new TH1D("h_cluster_charge", "cluster charge;charge [ADCu]; count", 5000, 0, 50000);
-
   h_seed_charge = new TH1D("h_seed_charge", "h_seed_charge;charge [ADCu]; count", 5000, 0, 50000);
-
   h_neighbor_charge = new TH1D("h_neighbor_charge", "neighbor charge; [ADCu]; count", 5000, 0, 50000);
 
+  h_cluster_charge_calibrated = new TH1D("h_cluster_charge_calibrated", "cluster charge calibrated;charge [ke^-]; count", 1000, 0, 10);
+  h_seed_charge_calibrated = new TH1D("h_seed_charge_calibrated", "h_seed_charge calibrated;charge [ke^-]; count", 1000, 0, 10);
+  h_neighbor_charge_calibrated = new TH1D("h_neighbor_charge_calibrated", "neighbor charge calibrated; [ke^-]; count", 1000, 0, 10);
+
   h_seed_vs_neighbor = new TH2D("h_seed_vs_neighbor", "seed vs neighbor charge;seed charge [ADCu];neighbor charge [ADCu]", 100, -1000, 10000, 100, -1000, 10000);
+  h_seed_vs_neighbors = new TH2D("h_seed_vs_neighbors", "seed vs neighbor charge;seed charge [ADCu];neighbor charge [ADCu]", 100, -1000, 10000, 100, -1000, 10000);
+
+  h_charge_vs_size = new TH2D("h_charge_vs_size", "cluster charge vs cluster size;cluster charge [ADCu]; cluster size [pixels]", 100, -1000, 10000, 20, -2, 18);
+  h_seedcharge_vs_size = new TH2D("h_seedcharge_vs_size", "seed charge vs cluster size;cluster charge [ADCu]; cluster size [pixels]", 100, -1000, 10000, 20, -2, 18);
 
   h_cluster_mat_charge = new TH2D("h_cluster_mat_charge", "mean charge in cluster matrix", 3, -1.5, 1.5, 3, -1.5, 1.5);
   h_cluster_mat_ratio = new TH2D("h_cluster_mat_ratio", "ratio in cluster matrix", 3, -1.5, 1.5, 3, -1.5, 1.5);
@@ -247,12 +253,11 @@ std::vector<std::unique_ptr<Pixel>> CE65TreeAnalyzer::findSeedCandidates()
   return seed_candidates;
 }
 
-bool isWithinBounds(int x, int y)
+bool CE65TreeAnalyzer::isWithinBounds(int x, int y)
 {
   // default _skip_edge_clustering = 1;
-  const int _skip_edge_clustering = 1;
-  return x >= 0 + _skip_edge_clustering && x < X_MX_SIZE - _skip_edge_clustering &&
-         y >= 0 + _skip_edge_clustering && y < Y_MX_SIZE - _skip_edge_clustering;
+  return x >= _skip_edge_clustering && x < X_MX_SIZE - _skip_edge_clustering &&
+         y >= _skip_edge_clustering && y < Y_MX_SIZE - _skip_edge_clustering;
 }
 
 void CE65TreeAnalyzer::Clustering()
@@ -260,14 +265,24 @@ void CE65TreeAnalyzer::Clustering()
   std::vector<std::unique_ptr<Pixel>> seed_candidates = findSeedCandidates();
   std::set<std::pair<int, int>> used_pixels;
   int tmpX, tmpY;
+
+  // sort by charge
+  std::sort(
+    seed_candidates.begin(), seed_candidates.end(),
+    [](const std::unique_ptr<Pixel>& a, const std::unique_ptr<Pixel>& b)
+    {
+    return a->charge() > b->charge();
+    }
+  );
+
   for (auto &seed : seed_candidates)
   {
-    int seed_x = seed->column();
-    int seed_y = seed->row();
+    int current_x = seed->column();
+    int current_y = seed->row();
     double seed_charge = seed->charge();
 
     // Check if the current seed has already been used in another cluster->
-    if (used_pixels.count({seed_x, seed_y}))
+    if (used_pixels.count({current_x, current_y}))
     {
       continue;
     }
@@ -277,22 +292,23 @@ void CE65TreeAnalyzer::Clustering()
     std::queue<std::pair<int, int>> pixel_queue;
 
     // Add the seed pixel to the queue and mark it as used.
-    pixel_queue.push({seed_x, seed_y});
-    used_pixels.insert({seed_x, seed_y});
+    pixel_queue.push({current_x, current_y});
+    used_pixels.insert({current_x, current_y});
 
     // Add the seed pixel to the new cluster.
     new_cluster->addPixel(std::move(seed));
-    new_cluster->setColumn(seed_x);
-    new_cluster->setRow(seed_y);
+    new_cluster->setColumn(current_x);
+    new_cluster->setRow(current_y);
 
     // Use a breadth-first search (BFS) to find all adjacent pixels.
-    while (!pixel_queue.empty())
+    do
     {
-      std::pair<int, int> current_pixel = pixel_queue.front();
+      // pixels should be explored is listed
+      std::pair<int, int> current_pixel_coords = pixel_queue.front();
       pixel_queue.pop();
 
-      int current_x = current_pixel.first;
-      int current_y = current_pixel.second;
+      int x = current_pixel_coords.first;
+      int y = current_pixel_coords.second;
       int neighbor_mat = 0;
 
       // Search the 8 neighboring pixels.
@@ -304,14 +320,17 @@ void CE65TreeAnalyzer::Clustering()
           if (dx == 0 && dy == 0)
             continue;
 
-          int neighbor_x = current_x + dx;
-          int neighbor_y = current_y + dy;
+          int neighbor_x = x + dx;
+          int neighbor_y = y + dy;
 
           // Check if the neighbor is within bounds and has not been used yet.
           if (isWithinBounds(neighbor_x, neighbor_y) && used_pixels.count({neighbor_x, neighbor_y}) == 0)
           {
             int neighbor_signal = frame->at(signalFrame).raw_amp[neighbor_x][neighbor_y] - frame->at(baselineFrame).raw_amp[neighbor_x][neighbor_y];
-
+            if (_clustering_method == "CLUSTER")
+            {
+              this->setNbhrTh(_threshold_seed);
+            }
             // Check if the neighbor signal exceeds the adjacency threshold.
             if (neighbor_signal > _threshold_neighbor)
             {
@@ -329,7 +348,10 @@ void CE65TreeAnalyzer::Clustering()
           neighbor_mat++;
         }
       }
-    }
+      if (_clustering_method == "WINDOW") {
+        break;
+      }
+    } while (!pixel_queue.empty());
     setCluster(std::move(new_cluster));
   }
 }
@@ -359,16 +381,22 @@ void CE65TreeAnalyzer::FillClusterHist()
     h_cluster_hit_map->Fill(cluster->colmun(), cluster->row());
     h_cluster_size->Fill(cluster->size());
     h_cluster_charge->Fill(cluster->charge());
+    h_cluster_charge_calibrated->Fill(cluster->charge()* _calib_factor / 1000);
 
     int seed_charge = cluster->getSeedPixel()->charge();
     h_seed_charge->Fill(seed_charge);
+    h_seed_charge_calibrated->Fill(seed_charge* _calib_factor / 1000);
 
     for (const auto &neighbor : cluster->getNeighbors())
     {
       int neighbor_charge = neighbor->charge();
       h_neighbor_charge->Fill(neighbor_charge);
+      h_neighbor_charge_calibrated->Fill(neighbor_charge * _calib_factor / 1000);
       h_seed_vs_neighbor->Fill(seed_charge, neighbor_charge);
     }
+    h_seed_vs_neighbors->Fill(seed_charge, cluster->charge());
+    h_charge_vs_size->Fill(cluster->charge(), cluster->size());
+    h_seedcharge_vs_size->Fill(seed_charge, cluster->size());
   }
 
   int cluster_multiplicity = getClusters().size();

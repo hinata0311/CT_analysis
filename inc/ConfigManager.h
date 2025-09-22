@@ -54,6 +54,9 @@ public:
             if (m_json.contains("eve_max")) {
                 _eve_max = m_json.at("eve_max").get<int>();
             }
+            if (m_json.contains("calib_factor")) {
+                _calib_factor = m_json.at("calib_factor").get<double>();
+            }
         } catch (const nlohmann::json::exception& e) {
             throw std::runtime_error("JSON parsing error: " + std::string(e.what()));
         }
@@ -75,12 +78,14 @@ public:
     int getThresholdNeighbor() const { return _threshold_neighbor; }
     const std::string& getClusteringMethod() const { return _clustering_method; }
     int getEveMax() const { return _eve_max; }
+    double getCalibFactor() const { return _calib_factor; }
 
 private:
     nlohmann::json m_json;
     std::string _input_dir;
     std::string _output_dir;
     std::string _input_data_name;
+    double _calib_factor = 1;
     int _eve_max = -1;
     int _skip_edge_seed = 2;
     int _skip_edge_clustering = 1;

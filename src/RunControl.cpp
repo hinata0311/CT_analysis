@@ -52,6 +52,7 @@ int main(int argc, char **argv)
 	reader->setSkipEdgeSeed(conf->getSkipEdgeSeed());
 	reader->setSkipEdgeClustering(conf->getSkipEdgeClustering());
 	reader->setClusteringMethod(conf->getClusteringMethod());
+    reader->setCalibFactor(conf->getCalibFactor());
 
     std::string outfile_suffix = "_seedthr"+ std::to_string(conf->getThresholdSeed()) + "_nbgrthr" + std::to_string(conf->getThresholdNeighbor());
 
