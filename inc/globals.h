@@ -3,12 +3,7 @@
 
 //#define _INCLUDE_EUDAQ_CONTROL  // -- specifies the operation mode:  coment this line for standalone compilation (when eudaq framework is not needed)
 
-
-#define DEFAULT_CONFIG_FILE_PATH   "./config/default.conf"
-#define DEFAULT_OUTPUT_DATA_PATH  "../../data/hist/"
-#define DEFAULT_INPUT_DATA_PATH "../../data/tree"
-#define DEFAULT_DAC_OUTPUT_DATA_PATH  "./dac_data/"
-
+// DAQ setting
 #define DAC_BOARD_ADC_MAX_COUNTS  65536
 #define RAW_DATA_BUFFER_SIZE		 2304 	// chars
 #define HEADER_SIZE				 12 		// chars
@@ -36,4 +31,3 @@ const int DAC_MONITOR_PERIOD = 5; //s
 const int DAC_SCAN_PERIOD = 60; //s*DAC_MONITOR_PERIOD
 
 #endif
-

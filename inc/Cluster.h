@@ -12,7 +12,7 @@ public:
     double colmun() const { return m_column; }
     double row() const { return m_row; }
     int charge() const { return m_charge; }
-    int size() const { return m_size; }
+    int size() const;
 
     void setColumn(double col) { m_column = col; }
     void setRow(double row) { m_row = row; }
@@ -25,8 +25,8 @@ public:
 
 
 private:
-    double m_column;
-    double m_row;
+    double m_column = 0;
+    double m_row = 0;
     int m_charge = 0;
     int m_size = 0;
     std::vector<std::unique_ptr<Pixel>> m_pixels;

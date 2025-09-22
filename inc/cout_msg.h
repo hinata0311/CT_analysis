@@ -14,11 +14,11 @@
 
 
 #define MSG(verbosity, str)	\
-	if(verbosity==ERR && verbosity<=VERBOSITY_LEVEL)   { std::cout << "\033[1;31m" << " [ERR]  :: "  << str <<  "\033[0m" << std::endl;	}	\
-	if(verbosity==WARN && verbosity<=VERBOSITY_LEVEL)  { std::cout << "\033[33m"   << " [WARN] :: "  << str <<  "\033[0m" << std::endl;	}	\
-	if(verbosity==INFO && verbosity<=VERBOSITY_LEVEL)  { std::cout << "\033[32m"   << " [info] :: "  << str <<  "\033[0m" << std::endl;	}	\
+	if(verbosity==ERR && verbosity<=VERBOSITY_LEVEL)   { std::cout << "\033[1;31m" << "[ERR]  :: "  << str <<  "\033[0m" << std::endl;	}	\
+	if(verbosity==WARN && verbosity<=VERBOSITY_LEVEL)  { std::cout << "\033[33m"   << "[WARN] :: "  << str <<  "\033[0m" << std::endl;	}	\
+	if(verbosity==INFO && verbosity<=VERBOSITY_LEVEL)  { std::cout << "\033[32m"   << "[INFO] :: "  << str <<  "\033[0m" << std::endl;	}	\
 	if(verbosity==CNTR && verbosity<=VERBOSITY_LEVEL)  { std::cout << "\033[0m"   << "        :: "  << str <<  "\033[0m" << std::endl;	}	\
-	if(verbosity==DEB && verbosity<=VERBOSITY_LEVEL)   { std::cout << "\033[94m"   << " [deb]  :: " << str <<  "\033[0m" << std::endl;	}	
+	if(verbosity==DEB && verbosity<=VERBOSITY_LEVEL)   { std::cout << "\033[94m"   << "[deb]  :: " << str <<  "\033[0m" << std::endl;	}	
 
 
 #endif

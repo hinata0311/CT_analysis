@@ -11,7 +11,7 @@ LDFLAGS=`root-config --ldflags`
 LDLIBS = `root-config --glibs` 
 
 # --- Project Files ---
-SOURCES := src/RunControl.cpp src/ce65TreeReader.cpp src/Cluster.cpp
+SOURCES := src/RunControl.cpp src/CE65TreeAnalyzer.cpp src/Cluster.cpp
 INCLUDES := -Iinc/
 HEADDIR := inc/
 HEADERS := $(wildcard $(HEADDIR)*.h)

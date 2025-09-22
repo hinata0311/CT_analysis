@@ -1,0 +1,221 @@
+/*! \class 		ce65TreeReader
+ *  \brief 		Header file for ce65TreeReader
+ *  \author    	Szymon Bugie, Roma Bugiel
+ *  \date      	March 2020
+ *  \pre       	ROOT installation, shared libraries of plane_str
+ *  \warning   	Exeception handling not added
+ *	\details	Class for reading the input data ROOT Tree - example as provided after test-beam campaing, no major changes. main
+ *  \todo
+ */
+
+#ifndef CE65TreeAnalyzer_h
+#define CE65TreeAnalyzer_h
+
+#include <bitset>
+#include "../inc/CE65Event.h"
+#include "../inc/globals.h"
+#include "../inc/cout_msg.h"
+#include "../inc/pbar.hpp"
+#include "../inc/Cluster.h"
+#include "TBenchmark.h"
+
+#include <TString.h>
+#include <TFile.h>
+#include <TH2.h>
+#include <TH1.h>
+#include <TChain.h>
+#include <TDirectory.h>
+#include <TTree.h>
+#include "TCanvas.h"
+#include "TStyle.h"
+#include "TH3.h"
+#include "TGraph.h"
+#include "TMultiGraph.h"
+#include "TString.h"
+#include "TF1.h"
+#include "TEnv.h"
+#include <fstream>
+#include <TROOT.h>
+#include <TSystem.h>
+
+#include <regex>
+#include <queue>
+#include <set>
+#include <vector>
+#include <numeric> 
+#include <cstdlib>	//atof
+#include <iostream> //cout, cin, endl
+#include <csignal>	//SIGINT
+
+/*! \brief Number of planes definition, for initializing the &Plane array
+ * * \todo this should be parameter taken from config file, but since the array init have to take constant value, it should be solved in other way than assigning this variable to NB_OF_PLANES*/
+const int PLANES_NUMBER = 3;
+extern bool terminate_process;
+void SignalHandler(int signum);
+
+class CE65TreeAnalyzer
+{
+
+public:
+	/*!  \brief Default contructor -- creates shared libraries */
+	CE65TreeAnalyzer()
+	{
+		// --- Create dictionary with the output file objects collection
+		#if !defined(__CINT__)
+			// Explicitly load the dictionary library created by the makefile
+			TString dictPath = gSystem->ExpandPathName("./build/lib/libce65dict.so");
+			if (gSystem->AccessPathName(dictPath) == 0) {
+				gSystem->Load(dictPath.Data());
+			} else {
+				// If the library is not found, print a warning.
+				// It might still work if LD_LIBRARY_PATH is set correctly.
+				std::cout << "Warning: Dictionary library not found at " << dictPath << std::endl;
+			}
+		#endif /* !defined(__CINT__) */
+		#ifdef __MAKECINT__
+		#pragma link C++ class ce65_frame + ;
+		#pragma link C++ class ce65_event + ;
+		#endif
+	}
+
+	// --- Setter ---
+	void setSeedTh(double seed_thr) { _threshold_seed = seed_thr; }
+	void setNbhrTh(double nbhr_thr) { _threshold_neighbor = nbhr_thr; }
+	void setEveMax(double eve_max) { _eve_max = eve_max; }
+	void setSkipEdgeSeed(int skip_edge_seed) { _skip_edge_seed = skip_edge_seed; }
+	void setSkipEdgeClustering(int skip_edge_clustering) { _skip_edge_clustering = skip_edge_clustering; }
+	void setClusteringMethod(std::string method) { _clustering_method = method; }
+	void setInputDir(std::string input_dir) { _input_data_dir = input_dir; }
+	void setOutputDir(std::string output_dir) { _output_data_dir = output_dir; }
+	void setDataName(std::string data_name) {_input_data_name = data_name; }
+	void setCalibFactor(double calib_factor) { _calib_factor = calib_factor; }
+
+	// --- Getter ---
+	std::string getDataName() const { return _input_data_name; }
+
+	const int width = 1600;
+	const int height = 600;
+
+	int signalFrame = 5;
+	int baselineFrame = 4;
+
+	unsigned long T0 = 0;
+
+	// ----  Branches definition ----
+	Long64_t ev_number = -1;
+	int frames_per_event = -1;
+	std::vector<ce65_frame> *frame = 0;
+	int chip_variant = 3;
+;
+	// class functions
+	int LoadTree();
+	void OpenOutTree(TString sufix);
+	void CloseOutTree();
+	void TreeInfo();
+
+	void FillSinglePixelRawSpectra(int iFrame = 0);
+	void FillSinglePixelSignalSpectra();
+	void FillBaselineSpectra();
+	void FillSingleEvent();
+	void FillSignalMap();
+	void FillClusterMatrix();
+	void ReadCalibData(TString dc_calib_path, TString ac_calib_path);
+	void HistoInit();
+	void Process();
+
+	//! Default constructor
+	~CE65TreeAnalyzer() {};
+
+	std::ofstream outfile;
+
+	TH1D *hPixRawSpectra[X_MX_SIZE][Y_MX_SIZE];
+	TH1D *hPixSignalSpectra[X_MX_SIZE][Y_MX_SIZE];
+	TH1D *h_baseline;
+
+	TH2D *h2_CE65_baseline;
+	TH2D *h2_CE65_noise;
+	TH2D *h2_calib_noise_map;
+
+	TH2D *h2_CE65_signal_mean;
+	TH2D *h2_CE65_signal_width;
+
+	TH1D *h_noise;
+	TH2D *h2_noisy_pixels_map;
+	TH2D *h2_ac_gain_map;
+	TH2D *h_noisy_pix_map;
+	TH2D *h_cluster_hit_map;
+	TH1D *h_cluster_multiplicity;
+
+	TH2D *h2_1eve_clstr_hitmap[10];
+
+	TH1D *h_cluster_size;
+	TH1D *h_cluster_charge;
+	TH1D *h_cluster_charge_calibrated;
+	TH1D *h_seed_charge;
+	TH1D *h_seed_charge_calibrated;
+	TH1D *h_neighbor_charge;
+	TH1D *h_neighbor_charge_calibrated;
+
+	TH1D *h_bl_in_time[X_MX_SIZE][Y_MX_SIZE];
+	TH2D *h_single_ev_signal_map;
+	TH1D *h_single_ev_time_signal;
+	TH2D *h_seed_vs_neighbor;
+	TH2D *h_seed_vs_neighbors;
+	TH2D *h_charge_vs_size;
+	TH2D *h_seedcharge_vs_size;
+	TCanvas *c_single_ev_time_signal;
+
+	TH2D *h_cluster_mat_charge;
+	TH2D *h_cluster_mat_ratio;
+
+	// --- Clustering methods ---
+	bool isWithinBounds(int x, int y);
+	std::vector<std::unique_ptr<Cluster>>& getClusters() { return _clusters; } 
+	void setCluster(std::unique_ptr<Cluster> cluster) { _clusters.push_back(std::move(cluster)); }
+	void resetClusters() { _clusters.clear(); }
+	std::vector<std::unique_ptr<Pixel>> findSeedCandidates();
+	void Clustering();
+	void CalClusterPos();
+	void FillClusterHist();
+
+private:
+	TEnv config;
+	TTree *tree; /*!< \todo [HIGH PRIOR] Input data are read out as a TChain. Needs to add possibility to provide the range of runs in config. */
+
+	std::string _output_image_path{""}; /*!< \brief path to output plots directory  */
+	std::string _input_data_dir{""};	/*!< \brief path to input data directory */
+	std::string _output_data_dir{""};	/*!< \brief path to input data directory */
+	std::string _input_data_name{""};	/*!< \brief core of the input file name */
+	std::string _input_tree_name{""};	/*!< \brief input tree name */
+
+	int _skip_edge_seed = 2;
+	int _skip_edge_clustering = 1;
+
+	std::string _clustering_method = "CLUSTER";
+	int _threshold_seed = 1000;
+	int _threshold_neighbor = 500;
+
+	int _eve_max = -1;
+
+	double _calib_factor = 1;
+
+	TFile *_out_data_file;
+	TTree *_out_tree;
+	unsigned int _skipEvents = 0;
+	double _statisticFraction = 1;
+
+	int sample_cntr = 0;
+	unsigned int _iEvent = 0;
+	unsigned int _i_saved_to_1eveh2hitmap = 0;
+	std::vector<std::unique_ptr<Cluster>> _clusters;
+	std::vector<int> _neighbor_mat_charge = {0,0,0,0,0,0,0,0};
+	std::vector<int> _neighbor_mat_number = {0,0,0,0,0,0,0,0};
+	// neighbor matrix
+	// | 03 | 05 | 08 |
+	// -----------------
+	// | 02 |seed| 07 |	
+	// -----------------
+	// | 01 | 04 | 06 |
+};
+
+#endif

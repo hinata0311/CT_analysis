@@ -1,0 +1,12 @@
+{
+    "input_dir": "test/",
+    "output_dir": "test/",
+    "input_data_name": "test_tree",
+    "eve_max": -1,
+    "clustering_method": "CLUSTER",
+    "skip_edge_seed": 2,
+    "skip_edge_cluster": 1,
+    "threshold_seed": 1000,
+    "threshold_neighbor": 0,
+    "calib_factor": 0.22
+}

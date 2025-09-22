@@ -4,7 +4,10 @@ void Cluster::addPixel(std::unique_ptr<Pixel> pixel){
     int charge = pixel->charge();
     m_pixels.push_back(std::move(pixel));
     m_charge += charge;
-    m_size ++;
+}
+
+int Cluster::size() const {
+    return m_pixels.size();
 }
 
 const Pixel* Cluster::getSeedPixel() const {
