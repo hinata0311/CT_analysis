@@ -81,7 +81,21 @@ void CE65TreeAnalyzer::HistoInit()
         "h2_1eve_clstr_hitmap[" + TString::Itoa(i, 11) + "]",
         "h2_1eve_clstr_hitmap[" + TString::Itoa(i, 11) + "]",
         X_MX_SIZE, 0, X_MX_SIZE, Y_MX_SIZE, 0, Y_MX_SIZE);
+    //h2_pixel_hitmap[i] = new TH2D(
+        // "h2_pixel_hitmap[" + TString::Itoa(i, 11) + "]",
+        // "h2_pixel_hitmap[" + TString::Itoa(i, 11) + "]",
+        // X_MX_SIZE, 0, X_MX_SIZE, Y_MX_SIZE, 0, Y_MX_SIZE);
   }
+
+  TDirectory *cluster_charge_directory = directory->mkdir("cluster_charge");
+  cluster_charge_directory->cd();
+  for (int i = 0; i < 5; ++i)
+  {
+    h1_cluster_charge[i] = new TH1D(
+        "h_cluster_charge[" + TString::Itoa(i, 11) + "]",
+        "h_cluster_charge[" + TString::Itoa(i, 11) + "];charge [ke^-];count",
+        1000,0,15);
+  } 
 
   directory->cd();
 
@@ -104,15 +118,15 @@ void CE65TreeAnalyzer::HistoInit()
   //	--------------------------------------------------------------------------
   h_noisy_pix_map = new TH2D("h_noisy_pix_map", "h_noisy_pix_map;#X; Y", X_MX_SIZE, 0, X_MX_SIZE, Y_MX_SIZE, 0, Y_MX_SIZE);
   h_cluster_hit_map = new TH2D("h_cluster_hit_map", "h_cluster_hit_map;#X; Y", X_MX_SIZE, 0, X_MX_SIZE, Y_MX_SIZE, 0, Y_MX_SIZE);
-  h_cluster_multiplicity = new TH1D("h_cluster_multiplicity", "h_cluster_multiplicity; event frame ; cluster multiplicity", 10000, 0, 100000);
+  h_cluster_multiplicity = new TH1D("h_cluster_multiplicity", "h_cluster_multiplicity; event frame ; cluster multiplicity", 100000, 0, 100000);
 
   h_cluster_charge = new TH1D("h_cluster_charge", "cluster charge;charge [ADCu]; count", 5000, 0, 50000);
   h_seed_charge = new TH1D("h_seed_charge", "h_seed_charge;charge [ADCu]; count", 5000, 0, 50000);
   h_neighbor_charge = new TH1D("h_neighbor_charge", "neighbor charge; [ADCu]; count", 5000, 0, 50000);
 
-  h_cluster_charge_calibrated = new TH1D("h_cluster_charge_calibrated", "cluster charge calibrated;charge [ke^-]; count", 1000, 0, 10);
+  h_cluster_charge_calibrated = new TH1D("h_cluster_charge_calibrated", "cluster charge calibrated;charge [ke^-]; count", 1500, 0, 15);
   h_seed_charge_calibrated = new TH1D("h_seed_charge_calibrated", "h_seed_charge calibrated;charge [ke^-]; count", 1000, 0, 10);
-  h_neighbor_charge_calibrated = new TH1D("h_neighbor_charge_calibrated", "neighbor charge calibrated; [ke^-]; count", 1000, 0, 10);
+  h_neighbor_charge_calibrated = new TH1D("h_neighbor_charge_calibrated", "neighbor charge calibrated; [ke^-]; count", 1000, 0, 15);
 
   h_seed_vs_neighbor = new TH2D("h_seed_vs_neighbor", "seed vs neighbor charge;seed charge [ADCu];neighbor charge [ADCu]", 100, -1000, 10000, 100, -1000, 10000);
   h_seed_vs_neighbors = new TH2D("h_seed_vs_neighbors", "seed vs neighbor charge;seed charge [ADCu];neighbor charge [ADCu]", 100, -1000, 10000, 100, -1000, 10000);
@@ -122,6 +136,14 @@ void CE65TreeAnalyzer::HistoInit()
 
   h_cluster_mat_charge = new TH2D("h_cluster_mat_charge", "mean charge in cluster matrix", 3, -1.5, 1.5, 3, -1.5, 1.5);
   h_cluster_mat_ratio = new TH2D("h_cluster_mat_ratio", "ratio in cluster matrix", 3, -1.5, 1.5, 3, -1.5, 1.5);
+
+  h_pixel_charge_calibrated = new TH1D("h_pixel_charge_calibrated", "pixel charge calibrated;charge [e^-]; count", 15000, 0, 15000);
+
+  h2_size_vs_cluster_charge = new TH2D("h2_size_vs_cluster_charge", "cluster size vs cluster charge;cluster size [pixels]; cluster charge [ke^-]", 15, 0.5, 15.5, 100, 0, 15);
+
+  h2_clustersize4 = new TH2D("h2_clustersize4", "cluster size = 4 histogtram",4.0,0.5,4.5,4.0,0.5,4.5);
+
+  //h2_pixel_hitmap = new TH2D("h2_pixel_hitmap", "pixel hitmap;#X; Y", X_MX_SIZE, 0, X_MX_SIZE, Y_MX_SIZE, 0, Y_MX_SIZE);
 }
 
 // LoadTree --------------------------------------------------------------------------------
@@ -232,6 +254,7 @@ void CE65TreeAnalyzer::FillSinglePixelSignalSpectra()
   }
 }
 
+
 // ----- new Clustering method -----
 
 std::vector<std::unique_ptr<Pixel>> CE65TreeAnalyzer::findSeedCandidates()
@@ -244,13 +267,24 @@ std::vector<std::unique_ptr<Pixel>> CE65TreeAnalyzer::findSeedCandidates()
     for (int y = 0 + _skip_edge_seed; y < Y_MX_SIZE - _skip_edge_seed; y++)
     {
       signal = frame->at(signalFrame).raw_amp[x][y] - frame->at(baselineFrame).raw_amp[x][y];
-      if (signal > _threshold_seed)
+
+      h_pixel_charge_calibrated->Fill(signal*_calib_factor);
+      if (signal > _threshold_seed && !isMasked(x, y))
       {
         seed_candidates.push_back(std::make_unique<Pixel>(x, y, signal));
       }
     }
   }
   return seed_candidates;
+}
+
+bool CE65TreeAnalyzer::isMasked(int x, int y)
+{
+  std::vector<std::pair<int, int>> masked_pixels = {
+    {2,7}, {45,8}, {13,4},{27,8}
+  };
+  std::pair<int, int>target = std::make_pair(x, y);
+  return target == masked_pixels[0] || target == masked_pixels[1] || target == masked_pixels[2] || target == masked_pixels[3];
 }
 
 bool CE65TreeAnalyzer::isWithinBounds(int x, int y)
@@ -324,7 +358,7 @@ void CE65TreeAnalyzer::Clustering()
           int neighbor_y = y + dy;
 
           // Check if the neighbor is within bounds and has not been used yet.
-          if (isWithinBounds(neighbor_x, neighbor_y) && used_pixels.count({neighbor_x, neighbor_y}) == 0)
+          if (isWithinBounds(neighbor_x, neighbor_y) && used_pixels.count({neighbor_x, neighbor_y}) == 0 && !isMasked(neighbor_x, neighbor_y)) 
           {
             int neighbor_signal = frame->at(signalFrame).raw_amp[neighbor_x][neighbor_y] - frame->at(baselineFrame).raw_amp[neighbor_x][neighbor_y];
             if (_clustering_method == "CLUSTER")
@@ -374,8 +408,18 @@ void CE65TreeAnalyzer::CalClusterPos() {
 
 }
 
+// void CE65TreeAnalyzer::FillPixelHist()
+// {
+//   for(const auto & cluster : getClusters()) {
+//     for(auto & pixel : cluster->pixels()) {
+//       h2_pixel_hitmap->Fill(pixel->column(), pixel->row());
+//     }
+//   }
+// }
+
 void CE65TreeAnalyzer::FillClusterHist()
 {
+
   for (const auto &cluster : getClusters())
   {
     h_cluster_hit_map->Fill(cluster->colmun(), cluster->row());
@@ -386,6 +430,23 @@ void CE65TreeAnalyzer::FillClusterHist()
     int seed_charge = cluster->getSeedPixel()->charge();
     h_seed_charge->Fill(seed_charge);
     h_seed_charge_calibrated->Fill(seed_charge* _calib_factor / 1000);
+
+    h2_size_vs_cluster_charge->Fill(cluster->size(), cluster->charge()* _calib_factor / 1000);
+
+    if(cluster->size() == 1) {
+      h1_cluster_charge[0]->Fill(cluster->charge()* _calib_factor / 1000);
+    } else if(cluster->size() == 2) {
+      h1_cluster_charge[1]->Fill(cluster->charge()* _calib_factor / 1000);
+    } else if(cluster->size() == 3) {
+      h1_cluster_charge[2]->Fill(cluster->charge()* _calib_factor / 1000);
+    } else if(cluster->size() == 4) {
+      h1_cluster_charge[3]->Fill(cluster->charge()* _calib_factor / 1000);
+      h2_clustersize4 -> Fill(cluster->colmun(),cluster->row());
+    } else if(cluster->size() <= 5) {
+      h1_cluster_charge[4]->Fill(cluster->charge()* _calib_factor / 1000);
+    }
+
+    
 
     for (const auto &neighbor : cluster->getNeighbors())
     {
@@ -399,14 +460,27 @@ void CE65TreeAnalyzer::FillClusterHist()
     h_seedcharge_vs_size->Fill(seed_charge, cluster->size());
   }
 
-  int cluster_multiplicity = getClusters().size();
-  h_cluster_multiplicity->Fill(_iEvent, cluster_multiplicity);
-  if (cluster_multiplicity > 10 && _i_saved_to_1eveh2hitmap < 10)
+  int multiplicity = getClusters().size();
+
+  // add new code ////////////////////////////////////////////////////////////////
+
+  
+  h_cluster_multiplicity->Fill(_iEvent, multiplicity);
+  
+
+  ///////////////////////////////////////////////////////////////////////////////
+
+  if (multiplicity > 10 && _i_saved_to_1eveh2hitmap < 10)
   {
     for (const auto &cluster : getClusters())
     {
       h2_1eve_clstr_hitmap[_i_saved_to_1eveh2hitmap]->Fill(cluster->colmun(), cluster->row());
+      //h2_pixel_hitmap[_i_saved_to_1eveh2hitmap]->Fill(cluster->getSeedPixel()->column(), cluster->getSeedPixel()->row());
     }
+    // for (const auto &pixel : frame->at(signalFrame).raw_amp)
+    // {
+    //   h2_pixel_hitmap[_i_saved_to_1eveh2hitmap] -> Fill(pixel.colmun(), pixel.row());
+    // }
     _i_saved_to_1eveh2hitmap++;
   }
 }
@@ -521,12 +595,16 @@ void CE65TreeAnalyzer::Process()
       // --- Frame setting ---
       signalFrame = i;
       baselineFrame = i - 1;
+      _iFrame ++;
       // --- Fill single pixel spevtra --- 
       FillSinglePixelRawSpectra(iEvent * 10 + i);
       FillSinglePixelSignalSpectra();
       // --- Cluster reset -> Clustering -> Fill histgrams ---
       resetClusters();
       Clustering();
+      if(this->getClusters().size() < 6){
+        continue;
+      }
       FillClusterHist();
     }
 

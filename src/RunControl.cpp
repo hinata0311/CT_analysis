@@ -30,10 +30,23 @@ int main(int argc, char **argv)
     gStyle->SetPalette(kCool);
 
     // --- Config reader ---
+    bool arg_options = false;
     ConfigManager * conf = nullptr;
     if(argc == 2) 
     {
         conf = new ConfigManager(argv[1]);
+    }
+    else if (argc == 4)
+    {
+        if (argv[2] == std::string("-o")) {
+            conf = new ConfigManager(argv[1]);
+            arg_options = true;
+        }
+        else 
+        {
+            MSG(ERR, "Argumant is not configuration file\n >>>>> Usage : ./run_basic_analysis <path_to_config>")
+            return 1;
+        }
     }
     else 
     {
@@ -43,10 +56,16 @@ int main(int argc, char **argv)
 
     CE65TreeAnalyzer *reader = new CE65TreeAnalyzer();
 
+
+
     reader->setOutputDir(conf->getOutputDir());
     reader->setInputDir(conf->getInputDir());
 	reader->setDataName(conf->getInputDataName());
     reader->setSeedTh(conf->getThresholdSeed());
+    if (arg_options) {
+        reader->setSeedTh(std::stoi(argv[3]));
+        MSG(INFO, "Setting seed threshold from command line argument: " << argv[3]);
+    }
     reader->setNbhrTh(conf->getThresholdNeighbor());
     reader->setEveMax(conf->getEveMax());
 	reader->setSkipEdgeSeed(conf->getSkipEdgeSeed());

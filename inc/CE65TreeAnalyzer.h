@@ -113,6 +113,8 @@ public:
 	void CloseOutTree();
 	void TreeInfo();
 
+	bool isMasked(int x, int y);
+
 	void FillSinglePixelRawSpectra(int iFrame = 0);
 	void FillSinglePixelSignalSpectra();
 	void FillBaselineSpectra();
@@ -148,6 +150,8 @@ public:
 
 	TH2D *h2_1eve_clstr_hitmap[10];
 
+	TH1D *h1_cluster_charge[5];
+
 	TH1D *h_cluster_size;
 	TH1D *h_cluster_charge;
 	TH1D *h_cluster_charge_calibrated;
@@ -168,6 +172,14 @@ public:
 	TH2D *h_cluster_mat_charge;
 	TH2D *h_cluster_mat_ratio;
 
+	TH2D *h2_pixel_hitmap[10];
+
+	TH1D *h_pixel_charge_calibrated;
+
+	TH2D *h2_size_vs_cluster_charge;
+
+	TH2D *h2_clustersize4;
+
 	// --- Clustering methods ---
 	bool isWithinBounds(int x, int y);
 	std::vector<std::unique_ptr<Cluster>>& getClusters() { return _clusters; } 
@@ -177,6 +189,8 @@ public:
 	void Clustering();
 	void CalClusterPos();
 	void FillClusterHist();
+
+	void FillPixelHist();
 
 private:
 	TEnv config;
@@ -206,6 +220,7 @@ private:
 
 	int sample_cntr = 0;
 	unsigned int _iEvent = 0;
+	unsigned int _iFrame = 0;
 	unsigned int _i_saved_to_1eveh2hitmap = 0;
 	std::vector<std::unique_ptr<Cluster>> _clusters;
 	std::vector<int> _neighbor_mat_charge = {0,0,0,0,0,0,0,0};

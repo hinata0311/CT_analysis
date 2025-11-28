@@ -1,7 +1,7 @@
 {
-    "input_dir": "/home/teramoto/maps/ce65/kyorin/2507/data/tree/",
-    "output_dir": "/home/teramoto/maps/ce65/kyorin/2507/data/hist/",
-    "input_data_name": "ce65_ct2507_120kv_400ma_woF",
+    "input_dir": "/home/quark_hu/ct_202507/data/",
+    "output_dir": "/home/hinata/kyorin/data/hist/",
+    "input_data_name": "ct_69_250731_ctOn_woF_long",
     "eve_max": -1,
     "clustering_method": "CLUSTER",
     "skip_edge_seed": 2,
